@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>SDG 填空遊戲</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f9ff;
+      padding: 30px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .question {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      width: 250px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .feedback {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌿 SDG 填空遊戲</h1>
+  <div class="question" id="question"></div>
+  <input type="text" id="answer" placeholder="請輸入答案">
+  <br>
+  <button onclick="checkAnswer()">提交答案</button>
+  <div class="feedback" id="feedback"></div>
+
+  <script>
+    const levels = [
+      [
+        { text: "SDG 1 的目標是終結＿＿。", answer: "貧窮" },
+        { text: "SDG 2 目標是消除＿＿。", answer: "飢餓" },
+        { text: "SDG 3 關注良好的＿＿與福祉。", answer: "健康" }
+      ],
+      [
+        { text: "SDG 4 強調提供＿＿教育給所有人。", answer: "優質" },
+        { text: "SDG 5 的核心是達成＿＿平等。", answer: "性別" },
+        { text: "SDG 6 提供＿＿與衛生設施。", answer: "潔淨飲水" }
+      ],
+      [
+        { text: "SDG 7 提供可負擔且＿＿的能源。", answer: "永續" },
+        { text: "SDG 8 促進體面工作與＿＿成長。", answer: "經濟" },
+        { text: "SDG 9 關注產業創新與＿＿建設。", answer: "基礎" }
+      ],
+      [
+        { text: "SDG 10 致力於減少＿＿。", answer: "不平等" },
+        { text: "SDG 11 建設＿＿的城市與社區。", answer: "永續" },
+        { text: "SDG 12 推動＿＿的消費與生產。", answer: "負責任" }
+      ],
+      [
+        { text: "SDG 13 鼓勵我們採取＿＿行動。", answer: "氣候" },
+        { text: "SDG 14 關注＿＿生態保護。", answer: "海洋" },
+        { text: "SDG 15 關注陸域＿＿與生物多樣性。", answer: "生態" }
+      ]
+    ];
+
+    let currentLevel = 0;
+    let currentQuestion = 0;
+
+    function showQuestion() {
+      const q = levels[currentLevel][currentQuestion];
+      document.getElementById("question").textContent = q.text;
+      document.getElementById("answer").value = "";
+      document.getElementById("feedback").textContent = "";
+    }
+
+    function checkAnswer() {
+      const input = document.getElementById("answer").value.trim();
+      const feedback = document.getElementById("feedback");
+      const q = levels[currentLevel][currentQuestion];
+
+      if (input === q.answer) {
+        feedback.style.color = "green";
+        feedback.textContent = "✅ 答對了！";
+        currentQuestion++;
+        if (currentQuestion < levels[currentLevel].length) {
+          setTimeout(showQuestion, 1000);
+        } else {
+          currentLevel++;
+          currentQuestion = 0;
+          if (currentLevel < levels.length) {
+            setTimeout(() => {
+              alert(`🎉 進入第 ${currentLevel + 1} 關！`);
+              showQuestion();
+            }, 1000);
+          } else {
+            feedback.textContent = "🎉 恭喜完成所有 5 關！";
+          }
+        }
+      } else {
+        feedback.style.color = "red";
+        feedback.textContent = "❌ 錯誤，請再試一次。";
+      }
+    }
+
+    showQuestion();
+  </script>
+</body>
+</html>

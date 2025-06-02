@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>SDG 看圖回答遊戲</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f9f9f9;
+      padding: 30px;
+      text-align: center;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    img {
+      width: 300px;
+      height: auto;
+      margin: 20px 0;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      width: 250px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    .feedback {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>🖼️ SDG 看圖回答遊戲</h1>
+  <div id="quiz">
+    <img id="question-image" src="" alt="SDG Image">
+    <div class="question" id="question">這張圖代表哪一項 SDG 目標？</div>
+    <input type="text" id="answer" placeholder="請輸入答案">
+    <br>
+    <button onclick="checkAnswer()">提交答案</button>
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <script>
+    const levels = [
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-01.jpg",
+          answer: "無貧窮"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-02.jpg",
+          answer: "零飢餓"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-03.jpg",
+          answer: "良好健康與福祉"
+        }
+      ],
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-04.jpg",
+          answer: "優質教育"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-05.jpg",
+          answer: "性別平等"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-06.jpg",
+          answer: "潔淨飲水與衛生設施"
+        }
+      ],
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-07.jpg",
+          answer: "可負擔且清潔的能源"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-08.jpg",
+          answer: "良好工作與經濟成長"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-09.jpg",
+          answer: "工業創新與基礎建設"
+        }
+      ],
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-10.jpg",
+          answer: "減少不平等"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-11.jpg",
+          answer: "永續城市與社區"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-12.jpg",
+          answer: "負責任的消費與生產"
+        }
+      ],
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-13.jpg",
+          answer: "氣候行動"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-14.jpg",
+          answer: "保育海洋生態"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-15.jpg",
+          answer: "保育陸地生態"
+        }
+      ]
+    ];
+
+    let currentLevel = 0;
+    let currentQuestion = 0;
+
+    function loadQuestion() {
+      const q = levels[currentLevel][currentQuestion];
+      document.getElementById("question-image").src = q.image;
+      document.getElementById("answer").value = "";
+      document.getElementById("feedback").textContent = "";
+    }
+
+    function checkAnswer() {
+      const userInput = document.getElementById("answer").value.trim();
+      const feedback = document.getElementById("feedback");
+      const q = levels[currentLevel][currentQuestion];
+
+      if (userInput === q.answer) {
+        feedback.style.color = "green";
+        feedback.textContent = "✅ 答對了！";
+        currentQuestion++;
+
+        if (currentQuestion < levels[currentLevel].length) {
+          setTimeout(loadQuestion, 1000);
+        } else {
+          currentLevel++;
+          currentQuestion = 0;
+
+          if (currentLevel < levels.length) {
+            setTimeout(() => {
+              alert(`🎉 進入第 ${currentLevel + 1} 關！`);
+              loadQuestion();
+            }, 1000);
+          } else {
+            feedback.textContent = "🎉 恭喜完成所有五關！";
+          }
+        }
+      } else {
+        feedback.style.color = "red";
+        feedback.textContent = "❌ 錯誤，請再試一次。";
+      }
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>

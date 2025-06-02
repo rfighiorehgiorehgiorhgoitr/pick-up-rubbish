@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>SDG 賓果遊戲</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f0f8ff;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    .bingo-board {
+      display: grid;
+      grid-template-columns: repeat(5, 100px);
+      gap: 10px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .cell {
+      background-color: #ffffff;
+      border: 2px solid #3498db;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    .cell.marked {
+      background-color: #2ecc71;
+      color: #fff;
+    }
+    .completed {
+      color: green;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+    #next-btn {
+      display: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌟 SDG 賓果遊戲 🌟</h1>
+  <p>點選格子完成 SDG 任務，連成一條線即可過關！共 5 關！</p>
+  <div class="bingo-board" id="board"></div>
+  <div class="completed" id="status"></div>
+  <button id="next-btn" onclick="nextLevel()">下一關 ▶️</button>
+
+  <script>
+    const levels = [
+      ["無貧窮", "零飢餓", "良好健康與福祉", "優質教育", "性別平等", "潔淨飲水與衛生設施", "可負擔且清潔的能源", "良好工作與經濟成長", "工業創新與基礎建設", "減少不平等", "永續城市與社區", "負責任的消費與生產", "氣候行動", "保育海洋生態", "保育陸地生態", "和平正義與有力的制度", "夥伴關係以實現目標", "永續發展教育", "綠色交通", "資源循環", "節能減碳", "無塑生活", "公平貿易", "永續飲食", "環境保護"],
+      ["性別平等", "良好健康與福祉", "無貧窮", "潔淨飲水與衛生設施", "永續飲食", "氣候行動", "減少不平等", "永續城市與社區", "節能減碳", "可負擔且清潔的能源", "公平貿易", "綠色交通", "無塑生活", "保育海洋生態", "保育陸地生態", "夥伴關係以實現目標", "環境保護", "負責任的消費與生產", "資源循環", "永續發展教育", "良好工作與經濟成長", "優質教育", "工業創新與基礎建設", "和平正義與有力的制度", "零飢餓"],
+      ["永續城市與社區", "節能減碳", "公平貿易", "環境保護", "綠色交通", "可負擔且清潔的能源", "無貧窮", "氣候行動", "無塑生活", "負責任的消費與生產", "永續發展教育", "良好健康與福祉", "保育海洋生態", "永續飲食", "保育陸地生態", "性別平等", "減少不平等", "潔淨飲水與衛生設施", "工業創新與基礎建設", "優質教育", "零飢餓", "和平正義與有力的制度", "夥伴關係以實現目標", "良好工作與經濟成長", "資源循環"],
+      ["潔淨飲水與衛生設施", "工業創新與基礎建設", "良好工作與經濟成長", "無塑生活", "永續發展教育", "無貧窮", "可負擔且清潔的能源", "性別平等", "永續城市與社區", "保育陸地生態", "綠色交通", "氣候行動", "節能減碳", "公平貿易", "環境保護", "夥伴關係以實現目標", "良好健康與福祉", "優質教育", "永續飲食", "負責任的消費與生產", "零飢餓", "和平正義與有力的制度", "資源循環", "保育海洋生態", "減少不平等"],
+      ["環境保護", "夥伴關係以實現目標", "可負擔且清潔的能源", "潔淨飲水與衛生設施", "公平貿易", "永續飲食", "保育海洋生態", "綠色交通", "節能減碳", "無貧窮", "永續發展教育", "優質教育", "性別平等", "減少不平等", "永續城市與社區", "和平正義與有力的制度", "資源循環", "工業創新與基礎建設", "無塑生活", "良好工作與經濟成長", "良好健康與福祉", "氣候行動", "保育陸地生態", "負責任的消費與生產", "零飢餓"]
+    ];
+
+    let currentLevel = 0;
+    let selected = [];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function createBoard() {
+      const board = document.getElementById("board");
+      board.innerHTML = "";
+      document.getElementById("status").textContent = "";
+      document.getElementById("next-btn").style.display = "none";
+
+      const shuffled = shuffle(levels[currentLevel].slice());
+      selected = Array(25).fill(false);
+
+      shuffled.slice(0, 25).forEach((goal, i) => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = goal;
+        cell.addEventListener("click", () => markCell(cell, i));
+        board.appendChild(cell);
+      });
+    }
+
+    function markCell(cell, index) {
+      if (!selected[index]) {
+        selected[index] = true;
+        cell.classList.add("marked");
+        checkBingo();
+      }
+    }
+
+    function checkBingo() {
+      const lines = [];
+      for (let i = 0; i < 5; i++) {
+        lines.push(selected.slice(i * 5, i * 5 + 5));
+        lines.push([0, 1, 2, 3, 4].map(j => selected[i + j * 5]));
+      }
+      lines.push([0, 6, 12, 18, 24].map(i => selected[i]));
+      lines.push([4, 8, 12, 16, 20].map(i => selected[i]));
+
+      const hasBingo = lines.some(line => line.every(cell => cell));
+      if (hasBingo) {
+        document.getElementById("status").textContent = `🎉 賓果！你完成了第 ${currentLevel + 1} 關！`;
+        if (currentLevel < levels.length - 1) {
+          document.getElementById("next-btn").style.display = "inline-block";
+        } else {
+          document.getElementById("status").textContent += " 🎊 恭喜完成所有關卡！";
+        }
+      }
+    }
+
+    function nextLevel() {
+      currentLevel++;
+      createBoard();
+    }
+
+    createBoard();
+  </script>
+</body>
+</html>

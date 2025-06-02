@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>SDG 連連看</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f9ff;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .game-container {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .item {
+      padding: 12px;
+      background: #fff;
+      border: 2px solid #aaa;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .item:hover {
+      background: #d0f0ff;
+    }
+
+    .matched {
+      background: #c8ffc8 !important;
+      pointer-events: none;
+    }
+
+    #result {
+      margin-top: 30px;
+      font-size: 24px;
+      font-weight: bold;
+      color: green;
+    }
+
+    #next-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌱 SDG 連連看遊戲</h1>
+  <div id="game">
+    <div class="game-container">
+      <div class="column left" id="left-column"></div>
+      <div class="column right" id="right-column"></div>
+    </div>
+    <div id="result"></div>
+    <button id="next-btn">下一關</button>
+  </div>
+
+  <script>
+    const levels = [
+      [
+        { left: 'SDG 1：終結貧窮', right: '提供社會保障與經濟援助', id: '1' },
+        { left: 'SDG 4：優質教育', right: '確保所有人享有平等且包容的教育機會', id: '2' },
+        { left: 'SDG 13：氣候行動', right: '採取行動對抗氣候變遷', id: '3' }
+      ],
+      [
+        { left: 'SDG 2：零飢餓', right: '消除飢餓，實現糧食安全', id: '1' },
+        { left: 'SDG 5：性別平等', right: '消除性別歧視與暴力', id: '2' },
+        { left: 'SDG 6：潔淨飲水與衛生', right: '提供可持續管理的水資源與衛生設施', id: '3' }
+      ],
+      [
+        { left: 'SDG 7：可負擔能源', right: '提供永續能源與提高能源效率', id: '1' },
+        { left: 'SDG 8：體面工作與經濟成長', right: '促進包容且永續的經濟成長', id: '2' },
+        { left: 'SDG 9：產業創新與基礎設施', right: '建立具韌性的基礎建設', id: '3' }
+      ],
+      [
+        { left: 'SDG 10：減少不平等', right: '減少國內及國際的不平等', id: '1' },
+        { left: 'SDG 11：永續城市', right: '打造安全、有韌性且永續的城市', id: '2' },
+        { left: 'SDG 12：負責任的消費與生產', right: '確保永續的生產與消費模式', id: '3' }
+      ],
+      [
+        { left: 'SDG 14：海洋生態', right: '保護海洋與海洋資源', id: '1' },
+        { left: 'SDG 15：陸域生態', right: '保育森林與生物多樣性', id: '2' },
+        { left: 'SDG 16：和平與正義', right: '促進和平與法治社會', id: '3' }
+      ]
+    ];
+
+    let currentLevel = 0;
+    let selectedLeft = null;
+    let matchedCount = 0;
+
+    const leftColumn = document.getElementById('left-column');
+    const rightColumn = document.getElementById('right-column');
+    const result = document.getElementById('result');
+    const nextBtn = document.getElementById('next-btn');
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function loadLevel(levelIndex) {
+      const level = levels[levelIndex];
+      selectedLeft = null;
+      matchedCount = 0;
+      result.textContent = '';
+      nextBtn.style.display = 'none';
+
+      leftColumn.innerHTML = '';
+      rightColumn.innerHTML = '';
+
+      shuffle(level).forEach(pair => {
+        const left = document.createElement('div');
+        left.className = 'item';
+        left.dataset.match = pair.id;
+        left.textContent = pair.left;
+        left.addEventListener('click', () => selectLeft(left));
+        leftColumn.appendChild(left);
+      });
+
+      shuffle(level).forEach(pair => {
+        const right = document.createElement('div');
+        right.className = 'item';
+        right.dataset.match = pair.id;
+        right.textContent = pair.right;
+        right.addEventListener('click', () => selectRight(right));
+        rightColumn.appendChild(right);
+      });
+    }
+
+    function selectLeft(item) {
+      if (item.classList.contains('matched')) return;
+      selectedLeft = item;
+      document.querySelectorAll('#left-column .item').forEach(el => el.style.background = '#fff');
+      item.style.background = '#ffeeba';
+    }
+
+    function selectRight(item) {
+      if (!selectedLeft || item.classList.contains('matched')) return;
+
+      if (selectedLeft.dataset.match === item.dataset.match) {
+        selectedLeft.classList.add('matched');
+        item.classList.add('matched');
+        selectedLeft.style.background = '#c8ffc8';
+        item.style.background = '#c8ffc8';
+        matchedCount++;
+
+        if (matchedCount === 3) {
+          if (currentLevel < levels.length - 1) {
+            result.textContent = '✅ 完成本關，點擊「下一關」繼續';
+            nextBtn.style.display = 'inline-block';
+          } else {
+            result.textContent = '🎉 恭喜完成所有關卡！';
+          }
+        }
+      } else {
+        alert('❌ 錯誤配對，請再試一次！');
+      }
+
+      selectedLeft = null;
+      document.querySelectorAll('#left-column .item').forEach(el => el.style.background = '#fff');
+    }
+
+    nextBtn.addEventListener('click', () => {
+      currentLevel++;
+      loadLevel(currentLevel);
+    });
+
+    loadLevel(currentLevel);
+  </script>
+</body>
+</html>
