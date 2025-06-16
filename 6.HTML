@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SDG 綜合挑戰</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f0f9ff 0%, #cbebff 100%);
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      min-height: 100vh;
+      color: #333;
+    }
+    h1 {
+      color: #007bff;
+      margin-bottom: 25px;
+      font-size: 2.5em;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    .game-section {
+      background: #ffffff;
+      border-radius: 15px;
+      padding: 30px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      margin-bottom: 20px;
+      display: none; /* Hidden by default */
+      animation: fadeIn 0.8s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .game-section.active {
+      display: block;
+    }
+    .navigation-buttons {
+      margin-top: 30px;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+    .nav-btn {
+      padding: 12px 25px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0,123,255,0.3);
+    }
+    .nav-btn:hover {
+      background-color: #0056b3;
+      transform: translateY(-2px);
+    }
+    .nav-btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Music Control */
+    #music-control {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9em;
+      color: #555;
+    }
+    #music-control button {
+        background: none;
+        border: none;
+        font-size: 1.5em;
+        cursor: pointer;
+        color: #007bff;
+        transition: color 0.2s;
+    }
+    #music-control button:hover {
+        color: #0056b3;
+    }
+
+
+    /* Game Specific Styles */
+
+    /* 問答挑戰 (Quiz) */
+    .quiz-container {
+      text-align: center;
+    }
+    .sdg-img {
+      width: 150px;
+      height: auto;
+      margin: 15px auto;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,128,0,0.3);
+    }
+    .quiz-question {
+      font-size: 1.4em;
+      margin: 20px 0;
+      color: #444;
+    }
+    .quiz-choices {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .quiz-choice-btn {
+      padding: 12px 20px;
+      font-size: 1.1em;
+      border: 2px solid #a0a0a0;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: white;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+    .quiz-choice-btn:hover:not(:disabled) {
+      background-color: #e6f7ff;
+      border-color: #007bff;
+    }
+    .quiz-choice-btn.correct {
+      background-color: #d4edda;
+      border-color: #28a745;
+    }
+    .quiz-choice-btn.incorrect {
+      background-color: #f8d7da;
+      border-color: #dc3545;
+    }
+    .quiz-choice-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+    .quiz-status {
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 1.2em;
+      min-height: 30px;
+    }
+
+    /* 連連看 (Matching) */
+    .matching-game-container {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 20px;
+    }
+    .matching-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 45%;
+    }
+    .matching-item {
+      padding: 12px;
+      background: #f0f8ff;
+      border: 2px solid #87ceeb;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+      font-size: 1.1em;
+    }
+    .matching-item:hover:not(.matched):not(.selected) {
+      background: #e0f2ff;
+      border-color: #4682b4;
+    }
+    .matching-item.selected {
+      background: #ffeeba;
+      border-color: #ffc107;
+      box-shadow: 0 0 8px rgba(255,193,7,0.5);
+    }
+    .matching-item.matched {
+      background: #d4edda;
+      border-color: #28a745;
+      pointer-events: none;
+      color: #333;
+    }
+    .matching-result {
+      margin-top: 25px;
+      font-size: 1.3em;
+      font-weight: bold;
+      color: green;
+    }
+
+    /* 填空 (Fill-in-the-Blank) */
+    .fill-in-question {
+      font-size: 1.4em;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+    .fill-in-input {
+      padding: 12px;
+      font-size: 1.1em;
+      width: 60%;
+      max-width: 350px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .fill-in-btn {
+      padding: 12px 25px;
+      font-size: 1.1em;
+      margin-top: 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #28a745;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .fill-in-btn:hover {
+      background-color: #218838;
+    }
+    .fill-in-feedback {
+      margin-top: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+      min-height: 30px;
+    }
+
+    /* 看圖回答 (Image Answer) */
+    .image-answer-img {
+      width: 250px;
+      height: auto;
+      margin: 20px 0;
+      border: 2px solid #a0a0a0;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .image-answer-input {
+      padding: 12px;
+      font-size: 1.1em;
+      width: 60%;
+      max-width: 350px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .image-answer-btn {
+      padding: 12px 25px;
+      font-size: 1.1em;
+      margin-top: 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #17a2b8;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .image-answer-btn:hover {
+      background-color: #138496;
+    }
+    .image-answer-feedback {
+      margin-top: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+      min-height: 30px;
+    }
+
+    /* 賓果 (Bingo) */
+    .bingo-board {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(80px, 1fr)); /* Responsive cells */
+      gap: 8px;
+      justify-content: center;
+      margin: 20px auto;
+      max-width: 500px; /* Limit board size */
+    }
+    .bingo-cell {
+      background-color: #ffffff;
+      border: 2px solid #3498db;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95em;
+      min-height: 60px; /* Ensure consistent height */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s, transform 0.2s;
+      word-break: break-word; /* Allow long words to break */
+    }
+    .bingo-cell:hover:not(.marked) {
+      background-color: #e6f7ff;
+      transform: translateY(-2px);
+    }
+    .bingo-cell.marked {
+      background-color: #2ecc71;
+      color: #fff;
+      border-color: #2ecc71;
+      pointer-events: none; /* Disable further clicks */
+    }
+    .bingo-status {
+      color: green;
+      font-weight: bold;
+      margin-top: 20px;
+      font-size: 1.3em;
+      min-height: 30px;
+    }
+    .bingo-next-btn {
+      display: none;
+      padding: 12px 25px;
+      font-size: 1.1em;
+      margin-top: 20px;
+      border: none;
+      border-radius: 8px;
+      background-color: #6c757d;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .bingo-next-btn:hover {
+      background-color: #5a6268;
+    }
+
+    /* Final Screen */
+    .final-screen {
+      font-size: 1.8em;
+      color: #007bff;
+      font-weight: bold;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌎 SDG 綜合挑戰 🌍</h1>
+
+  <div id="music-control">
+    <button id="play-music-btn" onclick="toggleMusic()">🎵 播放音樂</button>
+    <button id="pause-music-btn" onclick="toggleMusic()" style="display: none;">🔇 靜音</button>
+  </div>
+  <audio id="background-music" loop>
+    <source src="https://www.bensound.com/bensound-music/bensound-sunny.mp3" type="audio/mpeg">
+    您的瀏覽器不支持音頻元素。
+  </audio>
+
+  <div id="game-selection" class="game-section active">
+    <h2>選擇您的挑戰！</h2>
+    <p>點擊下方按鈕開始您的 SDG 學習旅程：</p>
+    <div class="navigation-buttons">
+      <button class="nav-btn" onclick="startGame(0)">開始問答挑戰</button>
+    </div>
+  </div>
+
+  <div id="game-0" class="game-section">
+    <h2>🎯 SDG 問答挑戰</h2>
+    <div class="quiz-container">
+      <img id="quiz-sdgImage" class="sdg-img" src="" alt="SDG 圖標" />
+      <div id="quiz-sdgTitle"></div>
+      <div id="quiz-question" class="quiz-question">載入中...</div>
+      <div class="quiz-choices" id="quiz-choices"></div>
+      <div id="quiz-status" class="quiz-status"></div>
+    </div>
+  </div>
+
+  <div id="game-1" class="game-section">
+    <h2>🔗 SDG 連連看遊戲</h2>
+    <div class="matching-game-container">
+      <div class="matching-column left" id="matching-left-column"></div>
+      <div class="matching-column right" id="matching-right-column"></div>
+    </div>
+    <div id="matching-result" class="matching-result"></div>
+    <button id="matching-next-btn" class="nav-btn" style="display: none;">下一關</button>
+  </div>
+
+  <div id="game-2" class="game-section">
+    <h2>📝 SDG 填空遊戲</h2>
+    <div class="fill-in-question" id="fill-in-question"></div>
+    <input type="text" id="fill-in-answer" class="fill-in-input" placeholder="請輸入答案">
+    <br>
+    <button onclick="checkFillInAnswer()" class="fill-in-btn">提交答案</button>
+    <div class="fill-in-feedback" id="fill-in-feedback"></div>
+  </div>
+
+  <div id="game-3" class="game-section">
+    <h2>👁️ SDG 看圖回答遊戲</h2>
+    <img id="image-answer-image" class="image-answer-img" src="" alt="SDG Image">
+    <div class="image-answer-question">這張圖代表哪一項 SDG 目標？</div>
+    <input type="text" id="image-answer-answer" class="image-answer-input" placeholder="請輸入答案">
+    <br>
+    <button onclick="checkImageAnswer()" class="image-answer-btn">提交答案</button>
+    <div class="image-answer-feedback" id="image-answer-feedback"></div>
+  </div>
+
+  <div id="game-4" class="game-section">
+    <h2>🏆 SDG 賓果遊戲</h2>
+    <p>點選格子完成 SDG 任務，連成一條線即可過關！</p>
+    <div class="bingo-board" id="bingo-board"></div>
+    <div class="bingo-status" id="bingo-status"></div>
+    <button id="bingo-next-btn" class="bingo-next-btn" onclick="nextBingoLevel()">下一關 ▶️</button>
+  </div>
+
+  <div id="final-screen" class="game-section">
+    <h2 class="final-screen">🎉 恭喜你完成了所有 SDG 挑戰！ 🎉</h2>
+    <p>你對永續發展目標的認識非常深入！</p>
+  </div>
+
+  <script>
+    let currentOverallGame = -1; // -1 for selection screen, 0-4 for games
+
+    // Music control elements
+    const backgroundMusic = document.getElementById('background-music');
+    const playMusicBtn = document.getElementById('play-music-btn');
+    const pauseMusicBtn = document.getElementById('pause-music-btn');
+    let isMusicPlaying = false;
+
+    // Auto-play music on user interaction (modern browsers require this)
+    document.addEventListener('click', function() {
+      if (!isMusicPlaying && currentOverallGame === -1) { // Only try to play if not already playing and on initial screen
+        backgroundMusic.play().then(() => {
+          isMusicPlaying = true;
+          playMusicBtn.style.display = 'none';
+          pauseMusicBtn.style.display = 'inline-block';
+        }).catch(error => {
+          console.log('音樂自動播放失敗，可能是瀏覽器限制：', error);
+          // 在此可以提示使用者手動播放音樂
+        });
+      }
+    }, { once: true }); // Only trigger once
+
+    function toggleMusic() {
+      if (backgroundMusic.paused) {
+        backgroundMusic.play();
+        isMusicPlaying = true;
+        playMusicBtn.style.display = 'none';
+        pauseMusicBtn.style.display = 'inline-block';
+      } else {
+        backgroundMusic.pause();
+        isMusicPlaying = false;
+        playMusicBtn.style.display = 'inline-block';
+        pauseMusicBtn.style.display = 'none';
+      }
+    }
+
+
+    function showGame(gameIndex) {
+      document.querySelectorAll('.game-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      if (gameIndex === -1) {
+        document.getElementById('game-selection').classList.add('active');
+      } else if (gameIndex === 5) { // After all games
+        document.getElementById('final-screen').classList.add('active');
+      } else {
+        document.getElementById(`game-${gameIndex}`).classList.add('active');
+      }
+    }
+
+    function startGame(gameIndex) {
+      currentOverallGame = gameIndex;
+      showGame(currentOverallGame);
+      // Initialize specific game based on index
+      if (currentOverallGame === 0) {
+        loadQuizQuestion();
+      } else if (currentOverallGame === 1) {
+        loadMatchingLevel(matchingCurrentLevel);
+      } else if (currentOverallGame === 2) {
+        showFillInQuestion();
+      } else if (currentOverallGame === 3) {
+        loadImageAnswerQuestion();
+      } else if (currentOverallGame === 4) {
+        createBingoBoard(bingoCurrentLevel);
+      }
+    }
+
+    function goToNextGame() {
+      currentOverallGame++;
+      if (currentOverallGame < 5) {
+        startGame(currentOverallGame);
+      } else {
+        showGame(5); // Show final screen
+      }
+    }
+
+    // --- Game 1: SDG 問答挑戰 (Quiz) Logic ---
+    const quizData = [
+      {
+        question: "SDG 1 的目標是什麼？",
+        choices: ["消除飢餓", "性別平等", "消除貧窮", "負責任消費與生產"],
+        answer: "消除貧窮",
+        image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-01.jpg"
+      },
+      {
+        question: "SDG 2 是哪一項？",
+        choices: ["零飢餓", "潔淨水資源", "可負擔能源", "氣候行動"],
+        answer: "零飢餓",
+        image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-02.jpg"
+      },
+      {
+        question: "哪個目標與『性別平等』有關？",
+        choices: ["SDG 4", "SDG 5", "SDG 6", "SDG 7"],
+        answer: "SDG 5",
+        image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-05.jpg"
+      },
+      {
+        question: "SDG 13 是什麼？",
+        choices: ["良好健康與福祉", "永續城市", "氣候行動", "和平與正義"],
+        answer: "氣候行動",
+        image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-13.jpg"
+      },
+      {
+        question: "SDG 17 的精神是？",
+        choices: ["全球夥伴關係", "可持續海洋", "教育品質", "綠色產業"],
+        answer: "全球夥伴關係",
+        image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-17.jpg"
+      }
+    ];
+
+    let quizCurrentQuestionIndex = 0;
+
+    function loadQuizQuestion() {
+      const q = quizData[quizCurrentQuestionIndex];
+      document.getElementById("quiz-question").textContent = `第 ${quizCurrentQuestionIndex + 1} 題：${q.question}`;
+      const img = document.getElementById("quiz-sdgImage");
+      img.src = q.image;
+      img.style.display = "block";
+      document.getElementById("quiz-sdgTitle").textContent = `SDG ${quizCurrentQuestionIndex + 1}`;
+
+      const choicesDiv = document.getElementById("quiz-choices");
+      choicesDiv.innerHTML = "";
+
+      q.choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.textContent = choice;
+        btn.className = "quiz-choice-btn";
+        btn.onclick = () => checkQuizAnswer(choice, btn);
+        btn.disabled = false;
+        choicesDiv.appendChild(btn);
+      });
+      document.getElementById("quiz-status").textContent = "";
+    }
+
+    function checkQuizAnswer(choice, clickedButton) {
+      const q = quizData[quizCurrentQuestionIndex];
+      const buttons = document.querySelectorAll("#quiz-choices .quiz-choice-btn");
+      buttons.forEach(btn => btn.disabled = true);
+
+      if (choice === q.answer) {
+        document.getElementById("quiz-status").textContent = "✅ 答對了！";
+        clickedButton.classList.add('correct');
+        quizCurrentQuestionIndex++;
+        if (quizCurrentQuestionIndex < quizData.length) {
+          setTimeout(loadQuizQuestion, 1000);
+        } else {
+          document.getElementById("quiz-question").textContent = "🎉 恭喜你完成 SDG 問答挑戰！";
+          document.getElementById("quiz-sdgImage").style.display = "none";
+          document.getElementById("quiz-sdgTitle").textContent = "";
+          document.getElementById("quiz-choices").innerHTML = "";
+          document.getElementById("quiz-status").textContent = "點擊「下一關」繼續！";
+          setTimeout(goToNextGame, 1500); // Auto go to next game
+        }
+      } else {
+        document.getElementById("quiz-status").textContent = "❌ 答錯了，請再試一次！";
+        clickedButton.classList.add('incorrect');
+        setTimeout(() => {
+          clickedButton.classList.remove('incorrect');
+          buttons.forEach(btn => btn.disabled = false); // Allow retry
+        }, 800);
+      }
+    }
+
+    // --- Game 2: SDG 連連看遊戲 (Matching) Logic ---
+    const matchingLevels = [
+      [
+        { left: 'SDG 1：終結貧窮', right: '提供社會保障與經濟援助', id: '1' },
+        { left: 'SDG 4：優質教育', right: '確保所有人享有平等且包容的教育機會', id: '2' },
+        { left: 'SDG 13：氣候行動', right: '採取行動對抗氣候變遷', id: '3' }
+      ],
+      [
+        { left: 'SDG 2：零飢餓', right: '消除飢餓，實現糧食安全', id: '1' },
+        { left: 'SDG 5：性別平等', right: '消除性別歧視與暴力', id: '2' },
+        { left: 'SDG 6：潔淨飲水與衛生', right: '提供可持續管理的水資源與衛生設施', id: '3' }
+      ],
+      [
+        { left: 'SDG 7：可負擔能源', right: '提供永續能源與提高能源效率', id: '1' },
+        { left: 'SDG 8：體面工作與經濟成長', right: '促進包容且永續的經濟成長', id: '2' },
+        { left: 'SDG 9：產業創新與基礎設施', right: '建立具韌性的基礎建設', id: '3' }
+      ],
+      [
+        { left: 'SDG 10：減少不平等', right: '減少國內及國際的不平等', id: '1' },
+        { left: 'SDG 11：永續城市', right: '打造安全、有韌性且永續的城市', id: '2' },
+        { left: 'SDG 12：負責任的消費與生產', right: '確保永續的生產與消費模式', id: '3' }
+      ],
+      [
+        { left: 'SDG 14：海洋生態', right: '保護海洋與海洋資源', id: '1' },
+        { left: 'SDG 15：陸域生態', right: '保育森林與生物多樣性', id: '2' },
+        { left: 'SDG 16：和平與正義', right: '促進和平與法治社會', id: '3' }
+      ]
+    ];
+
+    let matchingCurrentLevel = 0;
+    let matchingSelectedLeft = null;
+    let matchingMatchedCount = 0;
+
+    const matchingLeftColumn = document.getElementById('matching-left-column');
+    const matchingRightColumn = document.getElementById('matching-right-column');
+    const matchingResult = document.getElementById('matching-result');
+    const matchingNextBtn = document.getElementById('matching-next-btn');
+
+    function shuffleArray(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function loadMatchingLevel(levelIndex) {
+      const level = matchingLevels[levelIndex];
+      matchingSelectedLeft = null;
+      matchingMatchedCount = 0;
+      matchingResult.textContent = '';
+      matchingNextBtn.style.display = 'none';
+
+      matchingLeftColumn.innerHTML = '';
+      matchingRightColumn.innerHTML = '';
+
+      shuffleArray(level).forEach(pair => {
+        const left = document.createElement('div');
+        left.className = 'matching-item';
+        left.dataset.match = pair.id;
+        left.textContent = pair.left;
+        left.addEventListener('click', () => selectMatchingLeft(left));
+        matchingLeftColumn.appendChild(left);
+      });
+
+      shuffleArray(level).forEach(pair => {
+        const right = document.createElement('div');
+        right.className = 'matching-item';
+        right.dataset.match = pair.id;
+        right.textContent = pair.right;
+        right.addEventListener('click', () => selectMatchingRight(right));
+        matchingRightColumn.appendChild(right);
+      });
+      matchingNextBtn.onclick = () => {
+        matchingCurrentLevel++;
+        if (matchingCurrentLevel < matchingLevels.length) {
+          loadMatchingLevel(matchingCurrentLevel);
+        } else {
+          goToNextGame();
+        }
+      };
+    }
+
+    function selectMatchingLeft(item) {
+      if (item.classList.contains('matched')) return;
+      if (matchingSelectedLeft) {
+        matchingSelectedLeft.classList.remove('selected');
+      }
+      matchingSelectedLeft = item;
+      matchingSelectedLeft.classList.add('selected');
+    }
+
+    function selectMatchingRight(item) {
+      if (!matchingSelectedLeft || item.classList.contains('matched')) return;
+
+      if (matchingSelectedLeft.dataset.match === item.dataset.match) {
+        matchingSelectedLeft.classList.add('matched');
+        item.classList.add('matched');
+        matchingSelectedLeft.classList.remove('selected'); // Remove selected highlight
+        matchingMatchedCount++;
+
+        if (matchingMatchedCount === 3) {
+          if (matchingCurrentLevel < matchingLevels.length - 1) {
+            matchingResult.textContent = '✅ 完成本關！';
+            matchingNextBtn.style.display = 'inline-block';
+          } else {
+            matchingResult.textContent = '🎉 恭喜完成連連看遊戲！';
+            setTimeout(goToNextGame, 1500); // Auto go to next game
+          }
+        }
+      } else {
+        matchingResult.textContent = '❌ 錯誤配對，請再試一次！';
+        matchingSelectedLeft.classList.remove('selected');
+        matchingSelectedLeft = null;
+        setTimeout(() => matchingResult.textContent = '', 800); // Clear error message
+      }
+
+      matchingSelectedLeft = null;
+    }
+
+    // --- Game 3: SDG 填空遊戲 (Fill-in-the-Blank) Logic ---
+    const fillInLevels = [
+      [
+        { text: "SDG 1 的目標是終結＿＿。", answer: "貧窮" },
+        { text: "SDG 2 目標是消除＿＿。", answer: "飢餓" },
+        { text: "SDG 3 關注良好的＿＿與福祉。", answer: "健康" }
+      ],
+      [
+        { text: "SDG 4 強調提供＿＿教育給所有人。", answer: "優質" },
+        { text: "SDG 5 的核心是達成＿＿平等。", answer: "性別" },
+        { text: "SDG 6 提供＿＿與衛生設施。", answer: "潔淨飲水" }
+      ],
+      [
+        { text: "SDG 7 提供可負擔且＿＿的能源。", answer: "永續" },
+        { text: "SDG 8 促進體面工作與＿＿成長。", answer: "經濟" },
+        { text: "SDG 9 關注產業創新與＿＿建設。", answer: "基礎" }
+      ],
+      [
+        { text: "SDG 10 致力於減少＿＿。", answer: "不平等" },
+        { text: "SDG 11 建設＿＿的城市與社區。", answer: "永續" },
+        { text: "SDG 12 推動＿＿的消費與生產。", answer: "負責任" }
+      ],
+      [
+        { text: "SDG 13 鼓勵我們採取＿＿行動。", answer: "氣候" },
+        { text: "SDG 14 關注＿＿生態保護。", answer: "海洋" },
+        { text: "SDG 15 關注陸域＿＿與生物多樣性。", answer: "生態" }
+      ]
+    ];
+
+    let fillInCurrentLevel = 0;
+    let fillInCurrentQuestionIndex = 0;
+
+    function showFillInQuestion() {
+      const q = fillInLevels[fillInCurrentLevel][fillInCurrentQuestionIndex];
+      document.getElementById("fill-in-question").textContent = `第 ${fillInCurrentQuestionIndex + 1} 題：${q.text}`;
+      document.getElementById("fill-in-answer").value = "";
+      document.getElementById("fill-in-feedback").textContent = "";
+    }
+
+    function checkFillInAnswer() {
+      const input = document.getElementById("fill-in-answer").value.trim();
+      const feedback = document.getElementById("fill-in-feedback");
+      const q = fillInLevels[fillInCurrentLevel][fillInCurrentQuestionIndex];
+
+      if (input.toLowerCase() === q.answer.toLowerCase()) { // Case-insensitive check
+        feedback.style.color = "green";
+        feedback.textContent = "✅ 答對了！";
+        fillInCurrentQuestionIndex++;
+        if (fillInCurrentQuestionIndex < fillInLevels[fillInCurrentLevel].length) {
+          setTimeout(showFillInQuestion, 1000);
+        } else {
+          fillInCurrentLevel++;
+          fillInCurrentQuestionIndex = 0;
+          if (fillInCurrentLevel < fillInLevels.length) {
+            feedback.textContent = `🎉 完成本關，進入第 ${fillInCurrentLevel + 1} 關！`;
+            setTimeout(showFillInQuestion, 1500);
+          } else {
+            feedback.textContent = "🎉 恭喜完成填空遊戲！";
+            setTimeout(goToNextGame, 1500); // Auto go to next game
+          }
+        }
+      } else {
+        feedback.style.color = "red";
+        feedback.textContent = "❌ 錯誤，請再試一次。";
+      }
+    }
+
+    // --- Game 4: SDG 看圖回答遊戲 (Image Answer) Logic ---
+    const imageAnswerLevels = [
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-01.jpg",
+          answer: "無貧窮"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-02.jpg",
+          answer: "零飢餓"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-03.jpg",
+          answer: "良好健康與福祉"
+        }
+      ],
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-04.jpg",
+          answer: "優質教育"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-05.jpg",
+          answer: "性別平等"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-06.jpg",
+          answer: "潔淨飲水與衛生設施"
+        }
+      ],
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-07.jpg",
+          answer: "可負擔且清潔的能源"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-08.jpg",
+          answer: "良好工作與經濟成長"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-09.jpg",
+          answer: "工業創新與基礎建設"
+        }
+      ],
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-10.jpg",
+          answer: "減少不平等"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-11.jpg",
+          answer: "永續城市與社區"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-12.jpg",
+          answer: "負責任的消費與生產"
+        }
+      ],
+      [
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-13.jpg",
+          answer: "氣候行動"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-14.jpg",
+          answer: "保育海洋生態"
+        },
+        {
+          image: "https://sdgs.un.org/sites/default/files/goals/E_SDG_Icons-15.jpg",
+          answer: "保育陸地生態"
+        }
+      ]
+    ];
+
+    let imageAnswerCurrentLevel = 0;
+    let imageAnswerCurrentQuestionIndex = 0;
+
+    function loadImageAnswerQuestion() {
+      const q = imageAnswerLevels[imageAnswerCurrentLevel][imageAnswerCurrentQuestionIndex];
+      document.getElementById("image-answer-image").src = q.image;
+      document.getElementById("image-answer-answer").value = "";
+      document.getElementById("image-answer-feedback").textContent = "";
+    }
+
+    function checkImageAnswer() {
+      const userInput = document.getElementById("image-answer-answer").value.trim();
+      const feedback = document.getElementById("image-answer-feedback");
+      const q = imageAnswerLevels[imageAnswerCurrentLevel][imageAnswerCurrentQuestionIndex];
+
+      if (userInput.toLowerCase() === q.answer.toLowerCase()) { // Case-insensitive check
+        feedback.style.color = "green";
+        feedback.textContent = "✅ 答對了！";
+        imageAnswerCurrentQuestionIndex++;
+
+        if (imageAnswerCurrentQuestionIndex < imageAnswerLevels[imageAnswerCurrentLevel].length) {
+          setTimeout(loadImageAnswerQuestion, 1000);
+        } else {
+          imageAnswerCurrentLevel++;
+          imageAnswerCurrentQuestionIndex = 0;
+
+          if (imageAnswerCurrentLevel < imageAnswerLevels.length) {
+            feedback.textContent = `🎉 完成本關，進入第 ${imageAnswerCurrentLevel + 1} 關！`;
+            setTimeout(loadImageAnswerQuestion, 1500);
+          } else {
+            feedback.textContent = "🎉 恭喜完成看圖回答遊戲！";
+            setTimeout(goToNextGame, 1500); // Auto go to next game
+          }
+        }
+      } else {
+        feedback.style.color = "red";
+        feedback.textContent = "❌ 錯誤，請再試一次。";
+      }
+    }
+
+    // --- Game 5: SDG 賓果遊戲 (Bingo) Logic ---
+    const bingoLevels = [
+      ["無貧窮", "零飢餓", "良好健康與福祉", "優質教育", "性別平等", "潔淨飲水與衛生設施", "可負擔且清潔的能源", "良好工作與經濟成長", "工業創新與基礎建設", "減少不平等", "永續城市與社區", "負責任的消費與生產", "氣候行動", "保育海洋生態", "保育陸地生態", "和平正義與有力的制度", "夥伴關係以實現目標", "永續發展教育", "綠色交通", "資源循環", "節能減碳", "無塑生活", "公平貿易", "永續飲食", "環境保護"],
+      ["性別平等", "良好健康與福祉", "無貧窮", "潔淨飲水與衛生設施", "永續飲食", "氣候行動", "減少不平等", "永續城市與社區", "節能減碳", "可負擔且清潔的能源", "公平貿易", "綠色交通", "無塑生活", "保育海洋生態", "保育陸地生態", "夥伴關係以實現目標", "環境保護", "負責任的消費與生產", "資源循環", "永續發展教育", "良好工作與經濟成長", "優質教育", "工業創新與基礎建設", "和平正義與有力的制度", "零飢餓"],
+      ["永續城市與社區", "節能減碳", "公平貿易", "環境保護", "綠色交通", "可負擔且清潔的能源", "無貧窮", "氣候行動", "無塑生活", "負責任的消費與生產", "永續發展教育", "良好健康與福祉", "保育海洋生態", "永續飲食", "保育陸地生態", "性別平等", "減少不平等", "潔淨飲水與衛生設施", "工業創新與基礎建設", "優質教育", "零飢餓", "和平正義與有力的制度", "夥伴關係以實現目標", "良好工作與經濟成長", "資源循環"],
+      ["潔淨飲水與衛生設施", "工業創新與基礎建設", "良好工作與經濟成長", "無塑生活", "永續發展教育", "無貧窮", "可負擔且清潔的能源", "性別平等", "永續城市與社區", "保育陸地生態", "綠色交通", "氣候行動", "節能減碳", "公平貿易", "環境保護", "夥伴關係以實現目標", "良好健康與福祉", "優質教育", "永續飲食", "負責任的消費與生產", "零飢餓", "和平正義與有力的制度", "資源循環", "保育海洋生態", "減少不平等"],
+      ["環境保護", "夥伴關係以實現目標", "可負擔且清潔的能源", "潔淨飲水與衛生設施", "公平貿易", "永續飲食", "保育海洋生態", "綠色交通", "節能減碳", "無貧窮", "永續發展教育", "優質教育", "性別平等", "減少不平等", "永續城市與社區", "和平正義與有力的制度", "資源循環", "工業創新與基礎建設", "無塑生活", "良好工作與經濟成長", "良好健康與福祉", "氣候行動", "保育陸地生態", "負責任的消費與生產", "零飢餓"]
+    ];
+
+    let bingoCurrentLevel = 0;
+    let bingoSelectedCells = Array(25).fill(false); // Changed name to avoid conflict with other 'selected'
+
+    function shuffleArray(array) { // Re-using for clarity, but could be global
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function createBingoBoard(levelIndex) {
+      const board = document.getElementById("bingo-board");
+      board.innerHTML = "";
+      document.getElementById("bingo-status").textContent = "";
+      document.getElementById("bingo-next-btn").style.display = "none";
+
+      const shuffled = shuffleArray(bingoLevels[levelIndex].slice());
+      bingoSelectedCells = Array(25).fill(false); // Reset selected for new board
+
+      // Take only the first 25 items for a 5x5 board
+      shuffled.slice(0, 25).forEach((goal, i) => {
+        const cell = document.createElement("div");
+        cell.className = "bingo-cell";
+        cell.textContent = goal;
+        cell.addEventListener("click", () => markBingoCell(cell, i));
+        board.appendChild(cell);
+      });
+    }
+
+    function markBingoCell(cell, index) {
+      if (!bingoSelectedCells[index]) {
+        bingoSelectedCells[index] = true;
+        cell.classList.add("marked");
+        checkBingoWin();
+      }
+    }
+
+    function checkBingoWin() {
+      const lines = [];
+      // Rows
+      for (let i = 0; i < 5; i++) {
+        lines.push(bingoSelectedCells.slice(i * 5, i * 5 + 5));
+      }
+      // Columns
+      for (let i = 0; i < 5; i++) {
+        lines.push([0, 1, 2, 3, 4].map(j => bingoSelectedCells[i + j * 5]));
+      }
+      // Diagonals
+      lines.push([0, 6, 12, 18, 24].map(i => bingoSelectedCells[i]));
+      lines.push([4, 8, 12, 16, 20].map(i => bingoSelectedCells[i]));
+
+      const hasBingo = lines.some(line => line.every(cell => cell));
+      if (hasBingo) {
+        document.getElementById("bingo-status").textContent = `🎉 賓果！你完成了第 ${bingoCurrentLevel + 1} 關！`;
+        if (bingoCurrentLevel < bingoLevels.length - 1) {
+          document.getElementById("bingo-next-btn").style.display = "inline-block";
+        } else {
+          document.getElementById("bingo-status").textContent += " 🎊 恭喜完成所有賓果挑戰！";
+          setTimeout(goToNextGame, 1500); // Auto go to next game
+        }
+      }
+    }
+
+    function nextBingoLevel() {
+      bingoCurrentLevel++;
+      if (bingoCurrentLevel < bingoLevels.length) {
+        createBingoBoard(bingoCurrentLevel);
+      } else {
+        goToNextGame();
+      }
+    }
+
+    // Initial load: show game selection
+    showGame(-1);
+  </script>
+</body>
+</html>
