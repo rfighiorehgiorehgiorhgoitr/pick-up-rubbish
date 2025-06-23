@@ -152,12 +152,15 @@
       justify-content: center;
       gap: 40px;
       margin-top: 20px;
+      position: relative; /* Added for SVG positioning */
+      /* overflow: hidden; /* Optional: if lines might extend beyond the container */
     }
     .matching-column {
       display: flex;
       flex-direction: column;
       gap: 12px;
       width: 45%;
+      z-index: 1; /* Ensure items are above SVG lines */
     }
     .matching-item {
       padding: 12px;
@@ -188,6 +191,16 @@
       font-size: 1.3em;
       font-weight: bold;
       color: green;
+    }
+    /* SVG lines styling */
+    #matching-lines-svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none; /* Crucial: allows clicks to pass through */
+      z-index: 0; /* Ensure lines are behind items */
     }
 
     /* 填空 (Fill-in-the-Blank) */
@@ -363,9 +376,10 @@
 
   <div id="game-1" class="game-section">
     <h2>🔗 SDG 連連看遊戲</h2>
-    <div class="matching-game-container">
+    <div class="matching-game-container" id="matching-game-container">
       <div class="matching-column left" id="matching-left-column"></div>
       <div class="matching-column right" id="matching-right-column"></div>
+      <svg id="matching-lines-svg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></svg>
     </div>
     <div id="matching-result" class="matching-result"></div>
     <button id="matching-next-btn" class="nav-btn" style="display: none;">下一關</button>
@@ -599,22 +613,60 @@
     let matchingCurrentLevel = 0;
     let matchingSelectedLeft = null;
     let matchingMatchedCount = 0;
+    let matchedPairsElements = []; // Store references to matched left and right elements
 
     const matchingLeftColumn = document.getElementById('matching-left-column');
     const matchingRightColumn = document.getElementById('matching-right-column');
     const matchingResult = document.getElementById('matching-result');
     const matchingNextBtn = document.getElementById('matching-next-btn');
+    const matchingSvg = document.getElementById('matching-lines-svg'); // Get the SVG element
+    const matchingGameContainer = document.getElementById('matching-game-container'); // Get the container for resize observer
+
 
     function shuffleArray(array) {
       return array.sort(() => Math.random() - 0.5);
     }
 
+    function clearLines() {
+      // Remove all lines from the SVG
+      matchingSvg.innerHTML = '';
+    }
+
+    function drawLine(elem1, elem2) {
+      // Get the bounding rectangles of the two elements
+      const rect1 = elem1.getBoundingClientRect();
+      const rect2 = elem2.getBoundingClientRect();
+      const containerRect = matchingSvg.parentElement.getBoundingClientRect(); // Get the container's position
+
+      // Calculate start and end points relative to the SVG container
+      // Using the middle-right of elem1 and middle-left of elem2
+      const x1 = rect1.right - containerRect.left;
+      const y1 = rect1.top + rect1.height / 2 - containerRect.top;
+      const x2 = rect2.left - containerRect.left;
+      const y2 = rect2.top + rect2.height / 2 - containerRect.top;
+
+      // Create a new SVG line element
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.setAttribute('stroke', '#28a745'); // Green line for matched
+      line.setAttribute('stroke-width', '3');
+      line.classList.add('matched-line'); // Add a class for easy removal
+
+      matchingSvg.appendChild(line);
+    }
+
+
     function loadMatchingLevel(levelIndex) {
       const level = matchingLevels[levelIndex];
       matchingSelectedLeft = null;
       matchingMatchedCount = 0;
+      matchedPairsElements = []; // Reset matched pairs
       matchingResult.textContent = '';
       matchingNextBtn.style.display = 'none';
+      clearLines(); // Clear any existing lines
 
       matchingLeftColumn.innerHTML = '';
       matchingRightColumn.innerHTML = '';
@@ -648,19 +700,78 @@
 
     function selectMatchingLeft(item) {
       if (item.classList.contains('matched')) return;
+
+      // Clear any temporary selection line if it exists
+      const tempLine = matchingSvg.querySelector('.temp-line');
+      if (tempLine) {
+          tempLine.remove();
+      }
+
       if (matchingSelectedLeft) {
         matchingSelectedLeft.classList.remove('selected');
       }
       matchingSelectedLeft = item;
       matchingSelectedLeft.classList.add('selected');
+
+      // Draw a temporary line from the selected left item
+      if (matchingSelectedLeft) {
+        const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tempLine.setAttribute('stroke', '#ffc107'); // Yellow for selection
+        tempLine.setAttribute('stroke-width', '2');
+        tempLine.setAttribute('stroke-dasharray', '5,5'); // Dashed line
+        tempLine.classList.add('temp-line');
+        matchingSvg.appendChild(tempLine);
+        // Add event listener to update temp line on mouse move over the right column
+        matchingRightColumn.addEventListener('mousemove', updateTempLineToMouse);
+        matchingRightColumn.addEventListener('mouseleave', removeTempLine);
+        updateTempLineToMouse({clientX: matchingRightColumn.getBoundingClientRect().left + matchingRightColumn.offsetWidth / 2, clientY: matchingRightColumn.getBoundingClientRect().top + matchingRightColumn.offsetHeight / 2}); // Initial position
+      }
+    }
+
+    function updateTempLineToMouse(event) {
+        if (!matchingSelectedLeft) return;
+
+        const tempLine = matchingSvg.querySelector('.temp-line');
+        if (!tempLine) return;
+
+        const rect1 = matchingSelectedLeft.getBoundingClientRect();
+        const containerRect = matchingSvg.parentElement.getBoundingClientRect();
+
+        const x1 = rect1.right - containerRect.left;
+        const y1 = rect1.top + rect1.height / 2 - containerRect.top;
+
+        // Calculate mouse position relative to the SVG container
+        const x2 = event.clientX - containerRect.left;
+        const y2 = event.clientY - containerRect.top;
+
+        tempLine.setAttribute('x1', x1);
+        tempLine.setAttribute('y1', y1);
+        tempLine.setAttribute('x2', x2);
+        tempLine.setAttribute('y2', y2);
+    }
+
+    function removeTempLine() {
+        const tempLine = matchingSvg.querySelector('.temp-line');
+        if (tempLine) {
+            tempLine.remove();
+        }
+        matchingRightColumn.removeEventListener('mousemove', updateTempLineToMouse);
+        matchingRightColumn.removeEventListener('mouseleave', removeTempLine);
     }
 
     function selectMatchingRight(item) {
       if (!matchingSelectedLeft || item.classList.contains('matched')) return;
 
+      // Remove the temporary selection line
+      removeTempLine();
+
       if (matchingSelectedLeft.dataset.match === item.dataset.match) {
         matchingSelectedLeft.classList.add('matched');
         item.classList.add('matched');
+        // Draw the permanent line for the matched pair
+        drawLine(matchingSelectedLeft, item);
+        matchedPairsElements.push({ left: matchingSelectedLeft, right: item }); // Store for potential redraw/clear
+
         matchingSelectedLeft.classList.remove('selected'); // Remove selected highlight
         matchingMatchedCount++;
 
@@ -682,6 +793,30 @@
 
       matchingSelectedLeft = null;
     }
+
+    // Optional: Add a resize observer to redraw lines if the window size changes
+    const resizeObserver = new ResizeObserver(entries => {
+        // Check if the game-1 section is currently active
+        const game1Section = document.getElementById('game-1');
+        if (game1Section && game1Section.classList.contains('active')) {
+            clearLines();
+            matchedPairsElements.forEach(pair => drawLine(pair.left, pair.right));
+            // Re-add temporary line if a left item is still selected
+            if (matchingSelectedLeft) {
+                const tempLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                tempLine.setAttribute('stroke', '#ffc107');
+                tempLine.setAttribute('stroke-width', '2');
+                tempLine.setAttribute('stroke-dasharray', '5,5');
+                tempLine.classList.add('temp-line');
+                matchingSvg.appendChild(tempLine);
+                // Call update with a default point, as mouse position is not available on resize
+                updateTempLineToMouse({clientX: matchingRightColumn.getBoundingClientRect().left + matchingRightColumn.offsetWidth / 2, clientY: matchingRightColumn.getBoundingClientRect().top + matchingRightColumn.offsetHeight / 2});
+            }
+        }
+    });
+    // Observe the main container of the matching game
+    resizeObserver.observe(document.getElementById('matching-game-container'));
+
 
     // --- Game 3: SDG 填空遊戲 (Fill-in-the-Blank) Logic ---
     const fillInLevels = [
